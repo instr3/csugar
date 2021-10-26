@@ -45,6 +45,49 @@ void InputCSP(IntegratedCSPSolver& solver, bool& has_answer_key, std::vector<std
     }
 }
 
+void SolveLocalMaximal(IntegratedCSPSolver& solver,
+    std::vector<std::string>& answer_keys) {
+    CSPAnswer answer = solver.Solve();
+    solver.SetTargetVars(answer_keys);
+
+    if (!answer.IsSat()) {
+        std::cout << "unsat" << std::endl;
+        return;
+    }
+
+    std::map<std::string, bool> not_refuted_bool;
+    for (auto& name : answer_keys) {
+        if (solver.HasBoolVar(name)) {
+            not_refuted_bool.insert({ name, answer.GetBool(name) });
+        }
+        else {
+            std::cout << "bool variable " << name << " not found" << std::endl;
+            return;
+        }
+    }
+    while (true) {
+        std::vector<std::shared_ptr<Expr>> refuting_exprs;
+        for (auto it = not_refuted_bool.begin(); it != not_refuted_bool.end(); ) {
+            if (answer.GetBool(it->first) == true) {
+                solver.AddConstraint(Expr::VarBool(solver.GetBoolVar(it->first)));
+                it = not_refuted_bool.erase(it);
+            }
+            else {
+                refuting_exprs.push_back(Expr::VarBool(solver.GetBoolVar(it->first)));
+                ++it;
+            }
+        }
+        if (not_refuted_bool.empty()) break;
+        solver.AddConstraint(std::make_shared<Expr>(kOr, refuting_exprs));
+        answer = solver.Solve();
+        if (!answer.IsSat()) break;
+    }
+    std::cout << "sat" << std::endl;
+    for (auto& p : not_refuted_bool) {
+        std::cout << p.first << ' ' << (p.second ? "true" : "false") << std::endl;
+    }
+}
+
 void SolveIrrefutably(IntegratedCSPSolver& solver,
                       std::vector<std::string>& answer_keys) {
     CSPAnswer answer = solver.Solve();
@@ -165,6 +208,7 @@ void FindAllSolutions(IntegratedCSPSolver& solver,
 		std::cout << "ans " << i << std::endl;
 		OutputAnswer(solver, answer_keys, answer);
 	}
+    std::cout << "unsat" << std::endl;
 }
 
 void FindAnswer(IntegratedCSPSolver& solver) {
@@ -193,8 +237,9 @@ int main() {
     std::vector<std::string> answer_keys;
     IntegratedCSPSolver solver;
     InputCSP(solver, has_answer_key, answer_keys, max_answers);
-
-    if (max_answers != 0) {
+    if (max_answers == -2) {
+        SolveLocalMaximal(solver, answer_keys);
+    } else if (max_answers != 0) {
 		FindAllSolutions(solver, answer_keys, max_answers);
 	} else if (has_answer_key) {
 		SolveIrrefutably(solver, answer_keys);
