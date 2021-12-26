@@ -4,6 +4,7 @@
 #include <vector>
 #include <cstdlib>
 #include <map>
+#include <sstream>
 
 #include "integrated/integrated.h"
 
@@ -39,6 +40,8 @@ void InputCSP(IntegratedCSPSolver& solver, bool& has_answer_key, std::vector<std
             has_answer_key = true;
 		} else if (line[0] == '$') {
 			max_answers = std::stoi(line.substr(1));
+        } else if (line[0] == '?') {
+            break;
         } else {
             solver.Parse(line);
         }
@@ -208,7 +211,7 @@ void FindAllSolutions(IntegratedCSPSolver& solver,
 		std::cout << "ans " << i << std::endl;
 		OutputAnswer(solver, answer_keys, answer);
 	}
-    std::cout << "unsat" << std::endl;
+	std::cout << "unsat" << std::endl;
 }
 
 void FindAnswer(IntegratedCSPSolver& solver) {
@@ -249,3 +252,14 @@ int main() {
 
     return 0;
 }
+
+extern "C" __declspec(dllexport) char* __cdecl Call(const char* query) {
+    std::istringstream stream(query);
+    std::cin.rdbuf(stream.rdbuf());
+    std::ostringstream out;
+    std::cout.rdbuf(out.rdbuf());
+    // out << "test";
+    main();
+    return strdup(out.str().c_str()); // todo: memory leakage
+}
+

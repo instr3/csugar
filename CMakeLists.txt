@@ -18,7 +18,7 @@ ExternalProject_Add(minisat_project
 )
 add_library(minisat_lib STATIC IMPORTED)
 add_dependencies(minisat_lib minisat_project)
-set_property(TARGET minisat_lib PROPERTY IMPORTED_LOCATION ${MINISAT_INSTALL_LOCATION}/lib/libminisat.a)
+set_property(TARGET minisat_lib PROPERTY IMPORTED_LOCATION ${MINISAT_INSTALL_LOCATION}/lib/minisat.lib)
 
 # csugar_lib
 file(GLOB_RECURSE MAIN ${PROJECT_SOURCE_DIR}/src/common/*.cpp ${PROJECT_SOURCE_DIR}/src/conv/*.cpp ${PROJECT_SOURCE_DIR}/src/csp/*.cpp ${PROJECT_SOURCE_DIR}/src/icsp/*.cpp ${PROJECT_SOURCE_DIR}/src/sat/*.cpp ${PROJECT_SOURCE_DIR}/src/integrated/*.cpp)
@@ -26,7 +26,7 @@ add_library(csugar_lib STATIC ${MAIN})
 target_include_directories(csugar_lib PUBLIC ${PROJECT_SOURCE_DIR}/include ${MINISAT_INSTALL_LOCATION}/include)
 add_dependencies(csugar_lib minisat_lib)
 target_link_libraries(csugar_lib minisat_lib)
-set_target_properties(csugar_lib PROPERTIES OUTPUT_NAME "csugar")
+set_target_properties(csugar_lib PROPERTIES OUTPUT_NAME "csugar-lib")
 
 # csugar executable
 if (USE_EMSCRIPTEN)
@@ -34,7 +34,8 @@ add_executable(csugar src/main_embind.cpp)
 set_target_properties(csugar PROPERTIES COMPILE_OPTIONS --bind)
 set_target_properties(csugar PROPERTIES LINK_FLAGS --bind)
 else()
-add_executable(csugar src/main.cpp)
+# add_executable(csugar src/main.cpp)
+add_library(csugar SHARED src/main.cpp)
 endif()
 
 target_include_directories(csugar PUBLIC ${PROJECT_SOURCE_DIR}/include ${MINISAT_INSTALL_LOCATION}/include)
