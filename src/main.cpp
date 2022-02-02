@@ -252,6 +252,7 @@ int main() {
 
     return 0;
 }
+char* lib_buffer = NULL;
 
 extern "C" __declspec(dllexport) char* __cdecl Call(const char* query) {
     std::istringstream stream(query);
@@ -259,7 +260,9 @@ extern "C" __declspec(dllexport) char* __cdecl Call(const char* query) {
     std::ostringstream out;
     std::cout.rdbuf(out.rdbuf());
     // out << "test";
+    if (lib_buffer != NULL)
+        free(lib_buffer);
     main();
-    return strdup(out.str().c_str()); // todo: memory leakage
+    return lib_buffer = strdup(out.str().c_str());
 }
 
